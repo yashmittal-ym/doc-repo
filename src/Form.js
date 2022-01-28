@@ -1,16 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./form.css";
 import fire from './firebase';
 import { Oval } from  'react-loader-spinner'
+import Button from 'react-bootstrap/Button';
+import {db} from './firebase';
 
-const Form = () => {
+
+
+const Form = ({
+  editTitle,
+  editDescription,
+  editId,
+  editUrl,
+  editAction,
+  editOnClick,
+}) => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    url: ""
+    title: "",
+    description: "",
+    url: "",
   });
+  useEffect(() => {
+    if(editId){
+      setFormData({
+        title: editTitle,
+        description: editDescription,
+        url:editUrl,
+      });
+    }
+  }, [])
   const imageInputRef = React.useRef();
   const [uploading, setUploading] = useState(false);
 
@@ -23,7 +41,7 @@ const Form = () => {
             fileRef.getDownloadURL().then((docUrl)=>{
                 setFormData({
                   ...formData,
-                  ["url"]: docUrl
+                  [e.target.name]: docUrl
                 });
             })
             setUploading(false);
@@ -36,80 +54,70 @@ const Form = () => {
       [event.target.name]: event.target.value
     });
 
-  const { firstName, lastName, email, password } = formData;
+  const { title, description } = formData;
 
   const handleSubmit = async(e) => {
       e.preventDefault();
-    const { firstName, lastName, email, password, url } = formData;
-      const res = fetch('https://parabolic-rhino-338919-default-rtdb.firebaseio.com/userData.json',
-          {
-              method: "POST",
-              headers: {
-                  "content-type": "application/json",
-              },
-              body: JSON.stringify({
-                firstName,
-                lastName,
-                email,
-                password,
-                url
-              }),
-          });
-          if(res){
-              alert("data stored");
-              setFormData({
-                firstName: "",
-                lastName: "",
-                email: "",
-                password: "",
-                url: ""
-              });
-              imageInputRef.current.value = "";
-          } else {
-              alert("something went wrong");
-          }
+    const { title, description, url } = formData;
+    if(title==="" || description===""){
+      alert("Please fill all the fields");
+      return;
+    }
+    if(editId){
+      const tutorialsRef = db.ref('userData');
+      console.log("userData:  ", editAction, editId, url);
+      if(editAction==="update"){
+        tutorialsRef.child(editId).set({
+          title: title,
+          description: description,
+          url: url,
+        });
+      }
+      editOnClick();
+      setFormData({
+        title: "",
+        description: "",
+        url: "",
+      });
       
-
+      return;
+    }
+    if(url===""){
+      alert("Please upload the file");
+      return;
+    }
+    var tutorialsRef = db.ref("/userData");
+    tutorialsRef.push({
+      title: title,
+      description: description,
+      url: url,
+    });
+    editOnClick();
   };
 
   return (
     <form>
       <input
-        value={firstName}
+        value={title}
         onChange={e => updateFormData(e)}
-        placeholder="First name"
+        placeholder="Add tilte..."
         type="text"
-        name="firstName"
+        name="title"
         required
       />
       <input
-        value={lastName}
+        value={description}
         onChange={e => updateFormData(e)}
-        placeholder="Last name"
+        placeholder="Add description..."
         type="text"
-        name="lastName"
-        required
-      />
-      <input
-        value={email}
-        onChange={e => updateFormData(e)}
-        placeholder="Email address"
-        type="email"
-        name="email"
-        required
-      />
-      <input
-        value={password}
-        onChange={e => updateFormData(e)}
-        placeholder="Password"
-        type="password"
-        name="password"
+        name="description"
         required
       />
       <input
         type="file"
         onChange={onChange}
         required
+        name="url"
         ref={imageInputRef}
       />
       {
@@ -120,7 +128,7 @@ const Form = () => {
         ariaLabel='loading'
       />: <span/>
       }
-      <button type="submit" disabled={uploading} onClick={handleSubmit}>Submit</button>
+      <Button type="submit" disabled={uploading} onClick={handleSubmit}>Submit</Button>
     </form>
   );
 };

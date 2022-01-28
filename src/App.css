@@ -124,3 +124,23 @@ button {
   padding: 8px 0;
   background: #3a2b58;
 }
+.add {
+  position: relative;
+}
+.bottom-right {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  height: 70px;
+  width: 70px;
+  cursor: pointer;
+  margin: 1rem;
+}
+
+.hCBnvI{
+  font-size: large;
+}
+
+.header {
+  margin: 1rem 0 3rem 0;
+}
